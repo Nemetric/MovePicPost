@@ -9,6 +9,8 @@
 
     var jlat;
     var jlon;
+    var map;
+    var flightPlanCoordinates;
 
     // onSuccess Callback
     //   This method accepts a `Position` object, which contains
@@ -20,44 +22,68 @@
 
         var mapOptions = {
             center: { lat: position.coords.latitude, lng: position.coords.longitude },
-            zoom: 8
+            zoom: 13
         };
-        var map = new google.maps.Map(document.getElementById('map-canvas'),
+        map = new google.maps.Map(document.getElementById('map-canvas'),
             mapOptions);
 
-         alert('Latitude: ' + position.coords.latitude + '\n' +
-               'Longitude: ' + position.coords.longitude + '\n' +
-               'Altitude: ' + position.coords.altitude + '\n' +
-               'Accuracy: ' + position.coords.accuracy + '\n' +
-               'Altitude Accuracy: ' + position.coords.altitudeAccuracy + '\n' +
-               'Heading: ' + position.coords.heading + '\n' +
-               'Speed: ' + position.coords.speed + '\n' +
-               'Timestamp: ' + position.timestamp + '\n');
+        flightPlanCoordinates = [
+            new google.maps.LatLng(position.coords.latitude, position.coords.longitude),
+        ];
 
-       /* // Chicago
-        var coordinateObject = new Object();
-        coordinateObject.lat = '41.83682786072714';
-        coordinateObject.lng = '-87.626953125';
-        geoLocationHandler.addLocation(coordinateObject);
-        // New York
-        var coordinateObject = new Object();
-        coordinateObject.lat = '40.58058466412761';
-        coordinateObject.lng = '-74.00390625';
-        geoLocationHandler.addLocation(coordinateObject);
-        // Toronto
-        var coordinateObject = new Object();
-        coordinateObject.lat = '43.70759350405294';
-        coordinateObject.lng = '-79.365234375';
-        geoLocationHandler.addLocation(coordinateObject);
+        /*var flightPlanCoordinates = [
+            new google.maps.LatLng(40.8720962, -98.0235384),
+            new google.maps.LatLng(40.8716094, -97.9950856),
+            new google.maps.LatLng(40.8552518, -97.9956435),
+            new google.maps.LatLng(40.8555439, -98.0217789)
+        ];
+        var flightPath = new google.maps.Polyline({
+            path: flightPlanCoordinates,
+            geodesic: true,
+            strokeColor: '#FF0000',
+            strokeOpacity: 1.0,
+            strokeWeight: 2
+        });
 
-        var len = geoLocationHandler.arrLocations.length;
-        for (var i = 0; i < len; i++) {
-            if (i == 1) {
-                geoLocationHandler.distance += geoLocationHandler.calcDistance(geoLocationHandler.arrLocations[i - 1].lat, geoLocationHandler.arrLocations[i - 1].lng, geoLocationHandler.arrLocations[i].lat, geoLocationHandler.arrLocations[i].lng);
-            }
-        }
+        flightPath.setMap(map);
 
-        alert(geoLocationHandler.distance);*/
+        var center = new google.maps.LatLng(40.8555439, -98.0217789);
+        // using global variable:
+        map.panTo(center);*/
+
+        /*  alert('Latitude: ' + position.coords.latitude + '\n' +
+                'Longitude: ' + position.coords.longitude + '\n' +
+                'Altitude: ' + position.coords.altitude + '\n' +
+                'Accuracy: ' + position.coords.accuracy + '\n' +
+                'Altitude Accuracy: ' + position.coords.altitudeAccuracy + '\n' +
+                'Heading: ' + position.coords.heading + '\n' +
+                'Speed: ' + position.coords.speed + '\n' +
+                'Timestamp: ' + position.timestamp + '\n');*/
+
+        /* // 
+         var coordinateObject = new Object();
+         coordinateObject.lat = '40.8719988';
+         coordinateObject.lng = '-98.023238'; //,
+         geoLocationHandler.addLocation(coordinateObject);
+         // 
+         var coordinateObject = new Object();
+         coordinateObject.lat = '40.8719015';
+         coordinateObject.lng = '-97.9804085'; //,
+         geoLocationHandler.addLocation(coordinateObject);
+         // 
+         var coordinateObject = new Object();
+         coordinateObject.lat = '40.8583029';
+         coordinateObject.lng = '-97.9941843';  //,,
+         geoLocationHandler.addLocation(coordinateObject);
+ 
+         var len = geoLocationHandler.arrLocations.length;
+         for (var i = 0; i < len; i++) {
+             if (i == 1) {
+                 geoLocationHandler.distance += geoLocationHandler.calcDistance(geoLocationHandler.arrLocations[i - 1].lat, geoLocationHandler.arrLocations[i - 1].lng, geoLocationHandler.arrLocations[i].lat, geoLocationHandler.arrLocations[i].lng);
+             }
+         }
+ 
+         alert(geoLocationHandler.distance);*/
 
     };
 
@@ -79,6 +105,35 @@
               'message: ' + error.message + '\n');
     }
 
+    // onSuccess Geolocation
+    //
+    function onWatchSuccess(position) {
+        var newLatLon = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+        flightPlanCoordinates.push(newLatLon);
+
+        var flightPath = new google.maps.Polyline({
+            path: flightPlanCoordinates,
+            geodesic: true,
+            strokeColor: '#FF0000',
+            strokeOpacity: 1.0,
+            strokeWeight: 2
+        });
+
+        flightPath.setMap(map);
+
+       
+        map.panTo(newLatLon);
+    }
+
+    // onError Callback receives a PositionError object
+    //
+    function onWatchError(error) {
+        alert('code: ' + error.code + '\n' +
+              'message: ' + error.message + '\n');
+    }
+
+    var watchID = null;
+
     function onDeviceReady() {
         // Handle the Cordova pause and resume events
         document.addEventListener('pause', onPause.bind(this), false);
@@ -88,11 +143,15 @@
         jlat = $('#lat');
         jlon = $('#lon');
 
+        //Initialize the map to current location
         navigator.geolocation.getCurrentPosition(onSuccess, onError);
 
+        var options = { timeout: 30000 };
+        watchID = navigator.geolocation.watchPosition(onWatchSuccess, onWatchError, options);
 
-       
-      
+        
+
+
 
 
     };

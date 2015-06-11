@@ -460,7 +460,6 @@
   ],
   "changedFiles": [
     "plugins\\android.json",
-    "www\\index.html",
     "www\\scripts\\index.js"
   ],
   "deletedFiles": [],
